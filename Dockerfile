@@ -1,7 +1,7 @@
 FROM python:3.11-slim-buster
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    build-essential autoconf pkg-config wget ghostscript curl libpng-dev
+    build-essential autoconf pkg-config wget ghostscript curl libpng-dev procps
 
 RUN wget https://github.com/ImageMagick/ImageMagick/archive/refs/tags/7.1.0-31.tar.gz && \
     tar xzf 7.1.0-31.tar.gz && \
