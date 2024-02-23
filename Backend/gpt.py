@@ -181,14 +181,19 @@ def get_search_terms(video_subject: str, amount: int, script: str, ai_model: str
 
     Each search term should consist of 1-3 words,
     always add the main subject of the video.
+    Make sure the subject is in the start of search term.
+    Do not include "video" word to the term.
     
     YOU MUST ONLY RETURN THE JSON-ARRAY OF STRINGS.
     YOU MUST NOT RETURN ANYTHING ELSE. 
     YOU MUST NOT RETURN THE SCRIPT.
+    DO NOT INCLUDE THE MARKUP, like ```json
     
     The search terms must be related to the subject of the video.
     Here is an example of a JSON-Array of strings:
     ["search term 1", "search term 2", "search term 3"]
+
+    The whole text you will return must be valid JSON-parsable string
 
     For context, here is the full text:
     {script}
@@ -196,6 +201,8 @@ def get_search_terms(video_subject: str, amount: int, script: str, ai_model: str
 
     # Generate search terms
     response = generate_response(prompt, ai_model)
+    print("Search terms GPT response:")
+    print(colored(response, "blue"))
 
     # Parse response into a list of search terms
     search_terms = []
