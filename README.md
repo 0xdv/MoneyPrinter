@@ -1,12 +1,9 @@
 # MoneyPrinter 💸
 
-THIS IS DEPRECATED; CHECK OUT VERSION 2 [HERE](https://github.com/FujiwaraChoki/MoneyPrinterV2).
+Since this project was deprecated by original author (FujiwaraChoki), but I like this project, I fork it and add my own features.
+My goal is to stream-line the process of generation Shorts videos, make it customizable and easy at the same time.
 
 Automate the creation of YouTube Shorts locally, simply by providing a video topic to talk about.
-
-> **Important** Please make sure you look through existing/closed issues before opening your own. If it's just a question, please join our [discord](https://dsc.gg/fuji-community) and ask there.
-
-> **🎥** Watch the video on [YouTube](https://youtu.be/mkZsaDA2JnA?si=pNne3MnluRVkWQbE).
 
 ## Installation 📥
 
@@ -15,7 +12,7 @@ Automate the creation of YouTube Shorts locally, simply by providing a video top
 After you finished installing Python, you can install `MoneyPrinter` by following the steps below:
 
 ```bash
-git clone https://github.com/FujiwaraChoki/MoneyPrinter.git
+git clone https://github.com/0xdv/MoneyPrinter.git
 cd MoneyPrinter
 
 # Install requirements
@@ -119,10 +116,6 @@ You will have your name (and/or logo) added to this repository as a supporter as
 ## Contributing 🤝
 
 Pull Requests will not be accepted for the time-being.
-
-## Star History 🌟
-
-[![Star History Chart](https://api.star-history.com/svg?repos=FujiwaraChoki/MoneyPrinter&type=Date)](https://star-history.com/#FujiwaraChoki/MoneyPrinter&Date)
 
 ## License 📝
 
