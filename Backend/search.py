@@ -62,5 +62,7 @@ def search_for_stock_videos(query: str, api_key: str, it: int, min_dur: int) -> 
     # Let user know
     print(colored(f"\t=> \"{query}\" found {len(video_url)} Videos", "cyan"))
 
+    print(video_url)
+
     # Return the video url
     return video_url

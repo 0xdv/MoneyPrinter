@@ -1,6 +1,7 @@
 import os
 from utils import *
 from dotenv import load_dotenv
+import time
 
 # Load environment variables
 load_dotenv("../.env")
@@ -19,6 +20,7 @@ from youtube import upload_video
 from apiclient.errors import HttpError
 from flask import Flask, request, jsonify
 from moviepy.config import change_settings
+from api import api_blueprint
 
 
 
@@ -37,6 +39,7 @@ PORT = 8080
 AMOUNT_OF_STOCK_VIDEOS = 7
 GENERATING = False
 
+app.register_blueprint(api_blueprint)
 
 # Generation Endpoint
 @app.route("/api/generate", methods=["POST"])
@@ -45,6 +48,8 @@ def generate():
         # Set global variable
         global GENERATING
         GENERATING = True
+
+        start_time = time.time()
 
         # Clean
         clean_dir("../temp/")
@@ -318,6 +323,9 @@ def generate():
             os.system("pkill -f ffmpeg")
 
         GENERATING = False
+
+        end_time = time.time()
+        print(colored(f"Full process took {(end_time - start_time):2f} seconds",'grey'))
 
         # Return JSON
         return jsonify(

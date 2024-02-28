@@ -7,6 +7,7 @@ from termcolor import colored
 from dotenv import load_dotenv
 import os
 import google.generativeai as genai
+import time
 
 # Load environment variables
 load_dotenv("../.env")
@@ -35,6 +36,7 @@ def generate_response(prompt: str, ai_model: str) -> str:
 
     if ai_model == 'g4f':
 
+        start_time = time.time()
         response = g4f.ChatCompletion.create(
 
             model=g4f.models.gpt_35_turbo_16k_0613,
@@ -42,6 +44,8 @@ def generate_response(prompt: str, ai_model: str) -> str:
             messages=[{"role": "user", "content": prompt}],
 
         )
+        end_time = time.time()
+        print(f"GPT answer took {(end_time - start_time):.2f} seconds")
 
     elif ai_model in ["gpt3.5-turbo", "gpt4"]:
 
@@ -181,7 +185,7 @@ def get_search_terms(video_subject: str, amount: int, script: str, ai_model: str
 
     Each search term should consist of 1-3 words,
     always add the main subject of the video.
-    Make sure the subject is in the start of search term.
+    The subject of video must be in the start of search term.
     Do not include "video" word to the term.
     
     YOU MUST ONLY RETURN THE JSON-ARRAY OF STRINGS.
