@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useVideoPlayer } from "@/composables/useVideoPlayer"
 
 const scriptUrl = "http://localhost:8080/api/generate_script";
 const searchVideosUrl = "http://localhost:8080/api/search_videos";
@@ -126,13 +127,7 @@ async function requestVideo() {
   }
 }
 
-const videoPlayer = ref<HTMLVideoElement>()
-function playVideo(event: MouseEvent) {
-  (event.target as HTMLVideoElement).play()
-}
-function pauseVideo(event: MouseEvent) {
-  (event.target as HTMLVideoElement).pause()
-}
+const { videoPlayer, playVideo, pauseVideo } = useVideoPlayer()
 </script>
 
 <template>
