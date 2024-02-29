@@ -8,13 +8,18 @@ const searchVideosUrl = "http://localhost:8080/api/search_videos";
 const createVideoUrl = "http://localhost:8080/api/create_video";
 const createMetadataUrl = "http://localhost:8080/api/create_metadata";
 
+interface IVideo {
+  src: string,
+  isDeleted: boolean
+}
+
 const subjectText = ref<string>()
 const step = ref<number>(1)
 const script = ref<string>()
 const searchTerms = ref<string[]>()
 const videoStatus = ref<string>()
-const videoUrls = ref<string[]>()
 const resultUrl = ref<string>()
+const videoRoll = ref<IVideo[]>()
 
 const disableGenerateScript = computed(() => {
   return !subjectText.value || subjectText.value === "";
@@ -72,7 +77,10 @@ async function searchVideos() {
       response.data &&
       response.data.video_urls &&
       response.data.video_urls.length > 0) {
-      videoUrls.value = response.data.video_urls
+      videoRoll.value = response.data.video_urls.map((v: string) => ({
+        src: v,
+        isDeleted: false
+      }))
       videoStatus.value = `Found ${response.data.video_urls.length} videos`
 
     } else {
@@ -91,13 +99,11 @@ function create() {
 }
 
 async function createVideo() {
-  // step.value++
-
   let request = {
     video_subject: subjectText.value,
     script: script.value,
     search_terms: searchTerms.value,
-    video_urls: videoUrls.value
+    video_urls: videoRoll.value?.filter(v => !v.isDeleted).map(v => v.src)
   }
 
   try {
@@ -163,6 +169,12 @@ async function requestVideo() {
 }
 
 const { videoPlayer, playVideo, pauseVideo } = useVideoPlayer()
+
+function deleteVideo(index: number) {
+  if (videoRoll.value) {
+    videoRoll.value[index].isDeleted = !videoRoll.value[index].isDeleted
+  }
+}
 </script>
 
 <template>
@@ -198,11 +210,13 @@ const { videoPlayer, playVideo, pauseVideo } = useVideoPlayer()
           <q-step :name="3" title="Video Sequence" icon="settings" :done="step > 3">
             {{ videoStatus }}
 
-            <div v-if="videoUrls" class="video-roll">
-              <div v-for="videoUrl in videoUrls" class="q-ma-sm video-container">
-                <video ref="videoPlayer" @mouseover="playVideo" @mouseout="pauseVideo" volume="0">
-                  <source :src="videoUrl" type="video/mp4" />
+            <div v-if="videoRoll" class="video-roll">
+              <div v-for="(video, index) in videoRoll" :key="index" class="q-ma-sm video-container">
+                <video ref="videoPlayer" :class="{ 'deleted-video': video.isDeleted }" @mouseover="playVideo"
+                  @mouseout="pauseVideo" volume="0">
+                  <source :src="video.src" type="video/mp4" />
                 </video>
+                <q-btn class="delete-video-btn q-ma-sm" round icon="close" color="gray" @click="deleteVideo(index)" />
               </div>
             </div>
 
@@ -213,7 +227,7 @@ const { videoPlayer, playVideo, pauseVideo } = useVideoPlayer()
           </q-step>
 
           <q-step :name="4" title="Output" icon="settings" :done="step > 4">
-            <video class="q-ma-sm" :src="resultUrl" controls style="width: 300px;"></video>
+            <video class="q-ma-sm" :src="resultUrl" controls style="width: 300px;" volume="10"></video>
 
             <CopyBanner :text="title" />
             <CopyBanner :text="description" />
@@ -233,20 +247,33 @@ const { videoPlayer, playVideo, pauseVideo } = useVideoPlayer()
 .video-roll {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .video-container {
+  position: relative;
   width: 200px;
   transition: transform 0.3s ease-in-out;
 }
 
 .video-container:hover {
   transform: scale(1.5);
-  z-index: 99;
+  z-index: 90;
 }
 
 .video-container video {
   max-width: 100%;
   height: auto;
+}
+
+.deleted-video {
+  filter: grayscale(100%)
+}
+
+.delete-video-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 99;
 }
 </style>
