@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useVideoPlayer } from "@/composables/useVideoPlayer"
+import CopyBanner from "@/components/CopyBanner.vue"
 
 const scriptUrl = "http://localhost:8080/api/generate_script";
 const searchVideosUrl = "http://localhost:8080/api/search_videos";
 const createVideoUrl = "http://localhost:8080/api/create_video";
+const createMetadataUrl = "http://localhost:8080/api/create_metadata";
 
 const subjectText = ref<string>()
 const step = ref<number>(1)
@@ -83,6 +85,11 @@ async function searchVideos() {
   }
 }
 
+function create() {
+  createVideo()
+  createMetadata()
+}
+
 async function createVideo() {
   // step.value++
 
@@ -104,6 +111,34 @@ async function createVideo() {
     }).then((response) => response.json())
     if (response.status === 'success') {
       requestVideo()
+    }
+
+  } catch (error) {
+    alert("An error occurred. Please try again later.");
+    console.log(error);
+  }
+}
+
+const title = ref<string>()
+const description = ref<string>()
+async function createMetadata() {
+  let request = {
+    video_subject: subjectText.value,
+    script: script.value,
+  }
+
+  try {
+    let response = await fetch(createMetadataUrl, {
+      method: "POST",
+      body: JSON.stringify(request),
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    }).then((response) => response.json())
+    if (response.status === 'success') {
+      title.value = response.data.metadata.title
+      description.value = response.data.metadata.description
     }
 
   } catch (error) {
@@ -172,13 +207,16 @@ const { videoPlayer, playVideo, pauseVideo } = useVideoPlayer()
             </div>
 
             <q-stepper-navigation>
-              <q-btn @click="createVideo" color="primary" label="Create Video" />
+              <q-btn @click="create" color="primary" label="Create Video" />
               <q-btn flat @click="step--" color="primary" label="Back" class="q-ml-sm" />
             </q-stepper-navigation>
           </q-step>
 
           <q-step :name="4" title="Output" icon="settings" :done="step > 4">
             <video class="q-ma-sm" :src="resultUrl" controls style="width: 300px;"></video>
+
+            <CopyBanner :text="title" />
+            <CopyBanner :text="description" />
 
             <q-stepper-navigation>
               <q-btn color="primary" label="Good" />
