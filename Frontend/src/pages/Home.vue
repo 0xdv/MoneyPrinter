@@ -3,10 +3,12 @@ import { ref, computed } from 'vue'
 import { useVideoPlayer } from "@/composables/useVideoPlayer"
 import CopyBanner from "@/components/CopyBanner.vue"
 
-const scriptUrl = "http://localhost:8080/api/generate_script";
-const searchVideosUrl = "http://localhost:8080/api/search_videos";
-const createVideoUrl = "http://localhost:8080/api/create_video";
-const createMetadataUrl = "http://localhost:8080/api/create_metadata";
+const scriptUrl = "http://localhost:8080/api/generate_script"
+const searchVideosUrl = "http://localhost:8080/api/search_videos"
+const createVideoUrl = "http://localhost:8080/api/create_video"
+const createMetadataUrl = "http://localhost:8080/api/create_metadata"
+const requestVideoUrl = "http://localhost:8080/api/video"
+const publishVideoUrl = "http://localhost:8080/api/publish_video"
 
 interface IVideo {
   src: string,
@@ -127,6 +129,7 @@ async function createVideo() {
 
 const title = ref<string>()
 const description = ref<string>()
+const keywords = ref<string[]>()
 async function createMetadata() {
   let request = {
     video_subject: subjectText.value,
@@ -145,6 +148,7 @@ async function createMetadata() {
     if (response.status === 'success') {
       title.value = response.data.metadata.title
       description.value = response.data.metadata.description
+      keywords.value = response.data.metadata.keywords
     }
 
   } catch (error) {
@@ -157,7 +161,7 @@ async function requestVideo() {
   step.value++
 
   try {
-    fetch("http://localhost:8080/api/video")
+    fetch(requestVideoUrl)
       .then((response) => response.blob())
       .then(blob => {
         resultUrl.value = URL.createObjectURL(blob);
@@ -173,6 +177,42 @@ const { videoPlayer, playVideo, pauseVideo } = useVideoPlayer()
 function deleteVideo(index: number) {
   if (videoRoll.value) {
     videoRoll.value[index].isDeleted = !videoRoll.value[index].isDeleted
+  }
+}
+
+type Visibility = "private" | "public"
+const privacyStatus = ref<Visibility>("private");
+const publishModel = ref({
+  title,
+  description,
+  keywords,
+  privacyStatus
+})
+
+async function publishVideo() {
+  let request = {
+    title: title.value,
+    description: description.value,
+    keywords: keywords.value,
+    privacyStatus: privacyStatus.value
+  }
+
+  try {
+    let response = await fetch(publishVideoUrl, {
+      method: "POST",
+      body: JSON.stringify(request),
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    }).then((response) => response.json())
+    if (response.status === 'success') {
+      alert('Done')
+    }
+
+  } catch (error) {
+    alert("An error occurred. Please try again later.");
+    console.log(error);
   }
 }
 </script>
@@ -226,14 +266,31 @@ function deleteVideo(index: number) {
             </q-stepper-navigation>
           </q-step>
 
-          <q-step :name="4" title="Output" icon="settings" :done="step > 4">
-            <video class="q-ma-sm" :src="resultUrl" controls style="width: 300px;" volume="10"></video>
+          <q-step :name="4" title="Result" icon="settings" :done="step > 4">
+            <div style="display: flex">
+              <div>
+                <video class="q-ma-sm" :src="resultUrl" controls style="width: 300px;" volume="10"></video>
+              </div>
+              <div>
+                <CopyBanner :text="title" />
+                <CopyBanner :text="description" />
+                <q-banner rounded class="bg-grey-2 q-ma-sm">
+                  <q-chip v-if="keywords" v-for="kw in keywords" :key="kw" icon="tag">
+                    {{ kw }}
+                  </q-chip>
+                </q-banner>
+              </div>
+            </div>
 
-            <CopyBanner :text="title" />
-            <CopyBanner :text="description" />
+            <div class="q-pa-md">
+              <q-btn-toggle v-model="privacyStatus" toggle-color="primary" :options="[
+                { label: 'Private', value: 'private' },
+                { label: 'Public', value: 'public' },
+              ]" />
+            </div>
 
             <q-stepper-navigation>
-              <q-btn color="primary" label="Good" />
+              <q-btn color="primary" label="Publish" @click="publishVideo" />
               <q-btn flat @click="step--" color="primary" label="Back" class="q-ml-sm" />
             </q-stepper-navigation>
           </q-step>

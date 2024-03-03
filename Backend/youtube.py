@@ -5,12 +5,17 @@ import random
 import httplib2
 
 from termcolor import colored
-from oauth2client.file import Storage
-from apiclient.discovery import build
+# from oauth2client.file import Storage
+# from apiclient.discovery import build
 from apiclient.errors import HttpError
-from apiclient.http import MediaFileUpload
-from oauth2client.tools import argparser, run_flow
-from oauth2client.client import flow_from_clientsecrets
+# from apiclient.http import MediaFileUpload
+# from oauth2client.tools import argparser, run_flow
+# from oauth2client.client import flow_from_clientsecrets
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from google.auth.transport.requests import Request
 
 # Explicitly tell the underlying HTTP transport library not to retry, since
 # we are handling retry logic ourselves.
@@ -29,7 +34,7 @@ RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 # The CLIENT_SECRETS_FILE variable specifies the name of a file that contains
 # the OAuth 2.0 information for this application, including its client_id and
 # client_secret.
-CLIENT_SECRETS_FILE = "./client_secret.json"
+CLIENT_SECRETS_FILE = "./backend/client_secret.json"
 
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
@@ -60,26 +65,48 @@ https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
 VALID_PRIVACY_STATUSES = ("public", "private", "unlisted")  
   
   
+# def get_authenticated_service():
+#     """
+#     This method retrieves the YouTube service.
+
+#     Returns:
+#         any: The authenticated YouTube service.
+#     """
+#     flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
+#                                    scope=SCOPES,
+#                                    message=MISSING_CLIENT_SECRETS_MESSAGE)
+
+#     storage = Storage(f"{sys.argv[0]}-oauth2.json")
+#     credentials = storage.get()
+
+#     if credentials is None or credentials.invalid:
+#         flags = argparser.parse_args()
+#         credentials = run_flow(flow, storage, flags)
+
+#     return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
+#                  http=credentials.authorize(httplib2.Http()))
+
+TOKEN_FILE = 'backend/token.json'
+
 def get_authenticated_service():
-    """
-    This method retrieves the YouTube service.
+    creds = None
+    print('check')
+    if os.path.exists(TOKEN_FILE):
+        print('found')
+        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
+    if not creds or not creds.valid:
+        print('not valid')
+        print(creds)
+        print(creds)
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
+            creds = flow.run_local_server(port=8080)
 
-    Returns:
-        any: The authenticated YouTube service.
-    """
-    flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE,
-                                   scope=SCOPES,
-                                   message=MISSING_CLIENT_SECRETS_MESSAGE)
-
-    storage = Storage(f"{sys.argv[0]}-oauth2.json")
-    credentials = storage.get()
-
-    if credentials is None or credentials.invalid:
-        flags = argparser.parse_args()
-        credentials = run_flow(flow, storage, flags)
-
-    return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
-                 http=credentials.authorize(httplib2.Http()))
+        with open(TOKEN_FILE, 'w') as token:
+            token.write(creds.to_json())
+    return build('youtube', 'v3', credentials=creds)
 
 def initialize_upload(youtube: any, options: dict):
     """

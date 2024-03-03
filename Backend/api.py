@@ -1,15 +1,18 @@
 import os
 import time
-from termcolor import colored
-from flask import Blueprint, request, jsonify, send_file
-from gpt import generate_script as request_script, get_search_terms, generate_metadata
-from search import search_for_stock_videos
-from video import save_video
-from tiktokvoice import tts
 from uuid import uuid4
+from termcolor import colored
+from apiclient.errors import HttpError
+from flask import Blueprint, request, jsonify, send_file
 from moviepy.editor import concatenate_audioclips, AudioFileClip
+
 from utils import clean_dir
+from tiktokvoice import tts
+from video import save_video
+from search import search_for_stock_videos
 from video import generate_subtitles, combine_videos, generate_video
+from gpt import generate_script as request_script, get_search_terms, generate_metadata
+from youtube import upload_video
 
 SEARCH_TERM_COUNT = 7
 
@@ -144,7 +147,7 @@ def create_metadata():
     script = data.get('script')
     ai_model = data.get('aiModel', 'g4f')
 
-    title, description = generate_video_metadata(video_subject, script, ai_model)
+    title, description, keywords = generate_video_metadata(video_subject, script, ai_model)
 
     return jsonify(
     {
@@ -152,11 +155,52 @@ def create_metadata():
         "data": {
           "metadata": {
             "title": title,
-            "description": description
+            "description": description,
+            "keywords": keywords
           }
         },
     }
   )
+
+@api_blueprint.route("/api/publish_video", methods=["POST"])
+def publish_video():
+    final_video_path = 'output.mp4'
+
+    data = request.get_json()
+    title = data.get('title')
+    description = data.get('description')
+    keywords = data.get('keywords')
+    privacyStatus = data.get('privacyStatus', "private")  # "public", "private", "unlisted"
+
+    # Choose the appropriate category ID for your videos
+    video_category_id = "19"  # Travel
+    video_metadata = {
+        'video_path': os.path.abspath(f"../temp/{final_video_path}"),
+        'title': title,
+        'description': description,
+        'category': video_category_id,
+        'keywords': ",".join(keywords),
+        'privacyStatus': privacyStatus,
+    }
+
+    # Upload the video to YouTube
+    try:
+        # Unpack the video_metadata dictionary into individual arguments
+        video_response = upload_video(
+            video_path=video_metadata['video_path'],
+            title=video_metadata['title'],
+            description=video_metadata['description'],
+            category=video_metadata['category'],
+            keywords=video_metadata['keywords'],
+            privacy_status=video_metadata['privacyStatus']
+        )
+        print(f"Uploaded video ID: {video_response.get('id')}")
+        return jsonify("ok")
+    except HttpError as e:
+        print(f"An HTTP error {e.resp.status} occurred:\n{e.content}")
+        return jsonify("not_ok")
+    except Exception as ex:
+        raise ex
 
 def download_videos(video_urls):
     video_paths = []
@@ -230,4 +274,4 @@ def generate_video_metadata(video_subject, script, ai_model):
     print(colored("   Keywords: ", "blue"))
     print(colored(f"  {', '.join(keywords)}", "blue"))
 
-    return title, description
+    return title, description, keywords

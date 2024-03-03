@@ -252,11 +252,11 @@ def generate_metadata(video_subject: str, script: str, ai_model: str) -> Tuple[s
   
     # Build prompt for title  
     title_prompt = f"""  
-    Generate a catchy and SEO-friendly title for a YouTube shorts video about {video_subject}.  
+    Generate a catchy and SEO-friendly title for a YouTube shorts video about {video_subject}.
     """  
   
     # Generate title  
-    title = generate_response(title_prompt, ai_model).strip()  
+    title = generate_response(title_prompt, ai_model).strip().strip('"')
     
     # Build prompt for description  
     description_prompt = f"""  
@@ -266,9 +266,9 @@ def generate_metadata(video_subject: str, script: str, ai_model: str) -> Tuple[s
     """  
   
     # Generate description  
-    description = generate_response(description_prompt, ai_model).strip()  
+    description = generate_response(description_prompt, ai_model).strip().strip('"')
   
     # Generate keywords  
-    keywords = get_search_terms(video_subject, 6, script, ai_model)  
+    keywords = get_search_terms(video_subject, 6, script, ai_model)
 
     return title, description, keywords  
